@@ -1,0 +1,11 @@
+(library
+ ((name        bitmex_types)
+  (public_name bitmex-types)
+  (modules (bitmex_types))
+  (libraries (core yojson))))
+
+(rule
+ ((targets (bitmex_types.ml))
+  (deps (schema))
+  (action (run bitmex-types-gen schema bitmex_types.ml))
+  ))
