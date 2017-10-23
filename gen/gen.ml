@@ -44,7 +44,7 @@ let extract_member = function
   | Boolean         -> "to_bool"
   | Integer         -> "to_int"
   | Long            -> "to_int"
-  | Float           -> "to_float"
+  | Float           -> "fun v -> try to_float v with Type_error _ -> Float.of_int (to_int v)"
   | String          -> "to_string"
   | Timestamp       -> "to_string |> Time_ns.of_string"
   | Timespan        -> "to_string |> Time_ns.Span.of_string"
