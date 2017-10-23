@@ -99,6 +99,21 @@ let gen_module name json =
       Buffer.add_string buf (sprintf "    %s = (try Some (member \"%s\" json |> %s) with _ -> None) ;\n"
                                k' k (extract_member t))
   end ;
+  Buffer.add_string buf "  }\n\n" ;
+  Buffer.add_string buf
+{|  let merge t t' = {
+|} ;
+  List.iter types ~f:begin fun (k, (atom, t)) ->
+    let k' = (String.uncapitalize k |> protect_key) in
+    if List.mem ~equal:String.equal keys k then
+      Buffer.add_string buf (sprintf "    %s = t'.%s ;\n" k' k')
+    else if not atom then
+      Buffer.add_string buf (sprintf "    %s = (match t.%s, t'.%s with (_, []) -> t.%s | _ -> t'.%s) ;\n"
+                               k' k' k' k' k')
+    else
+      Buffer.add_string buf
+        (sprintf "    %s = Option.first_some t'.%s t.%s ;\n" k' k' k')
+  end ;
   Buffer.add_string buf "  }\n" ;
   Buffer.add_string buf "end" ;
   Buffer.contents buf
