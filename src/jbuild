@@ -1,6 +1,7 @@
 (library
  ((name        bitmex_types)
   (public_name bitmex-types)
+  (preprocess (pps (ppx_sexp_conv)))
   (modules (bitmex_types))
   (libraries (core yojson))))
 

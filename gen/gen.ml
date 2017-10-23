@@ -75,16 +75,17 @@ let gen_module name json =
     end in
   if List.(length keys = 0 && length types = 0) then raise UnsupportedType ;
   Buffer.add_string buf (sprintf "module %s = struct\n  type t = {\n" name ) ;
-  List.iter types ~f:begin fun (k, (atom, t)) ->
+  let contains_any = List.fold_left ~init:false types ~f:begin fun a (k, (atom, t)) ->
     let v = match atom, List.mem ~equal:String.equal keys k with
       | true, true -> BitmexType.to_type t
       | true, false -> BitmexType.to_type t ^ " option"
       | _ -> BitmexType.to_type t ^ " list"
     in
     Buffer.add_string buf (sprintf "    %s : %s ;\n"
-                             (String.uncapitalize k |> protect_key) v)
-  end ;
-  Buffer.add_string buf "  }\n\n" ;
+                             (String.uncapitalize k |> protect_key) v) ;
+    if t = Any || t = UserPreferences then true else a || false
+  end in
+  Buffer.add_string buf (sprintf "  }%s\n\n" (if contains_any then "" else " [@@deriving sexp]"));
   Buffer.add_string buf
 {|  let of_yojson json = Yojson.Safe.Util.{
 |} ;
