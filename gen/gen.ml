@@ -27,7 +27,7 @@ module BitmexType = struct
     | s -> invalid_arg ("Bitmex.of_string: got " ^ s)
 
   let to_type = function
-    | Guid -> "Uuid.t"
+    | Guid -> "Uuid.Unstable.t"
     | Boolean -> "bool"
     | Integer -> "int"
     | Long -> "int"
