@@ -1,0 +1,15 @@
+(library
+ (name        bitmex_types)
+ (public_name bitmex-types)
+ (preprocess (pps ppx_sexp_conv))
+ (modules bitmex_types)
+ (libraries core yojson))
+
+(rule
+ (targets bitmex_types.ml)
+ (deps schema)
+ (action (run bitmex-types-gen schema bitmex_types.ml)))
+
+(rule
+ (targets schema)
+ (action (run curl -s -o schema https://testnet.bitmex.com/api/v1/schema)))

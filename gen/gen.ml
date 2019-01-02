@@ -104,7 +104,7 @@ let gen_module name json =
   Buffer.add_string buf
 {|  let merge t t' = {
 |} ;
-  List.iter types ~f:begin fun (k, (atom, t)) ->
+  List.iter types ~f:begin fun (k, (atom, _)) ->
     let k' = (String.uncapitalize k |> protect_key) in
     if List.mem ~equal:String.equal keys k then
       Buffer.add_string buf (sprintf "    %s = t'.%s ;\n" k' k')
