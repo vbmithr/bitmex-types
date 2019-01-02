@@ -13,18 +13,19 @@ module BitmexType = struct
     | Any
     | UserPreferences
 
-  let of_string = function
+  let of_string s =
+    match String.lowercase s with
     | "guid" -> Guid
     | "boolean" -> Boolean
     | "integer" -> Integer
     | "long" -> Long
     | "float" -> Float
-    | "string" | "symbols" -> String
+    | "string" | "symbols" | "text" -> String
     | "timestamp" -> Timestamp
     | "timespan" -> Timespan
     | "any" | "object" -> Any
-    | "UserPreferences" -> UserPreferences
-    | s -> invalid_arg ("Bitmex.of_string: got " ^ s)
+    | "userpreferences" -> UserPreferences
+    | _ -> invalid_arg ("Bitmex.of_string: got " ^ s)
 
   let to_type = function
     | Guid -> "Uuid.Unstable.t"
@@ -124,7 +125,7 @@ let () =
   let schema = Stdio.In_channel.read_all Sys.argv.(1) |> from_string in
   let modules = Util.keys schema in
   let modules =
-    List.group modules ~break:(fun a b -> String.subo a ~len:4 <> String.subo b ~len:4) in
+    List.group modules ~break:String.equal in
   Stdio.Out_channel.with_file (Sys.argv.(2))
     ~append:false ~binary:false ~fail_if_exists:false ~f:begin fun oc ->
     Stdio.Out_channel.fprintf oc "open Core\n\n" ;
