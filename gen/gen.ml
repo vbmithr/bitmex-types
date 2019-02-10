@@ -36,7 +36,7 @@ module BitmexType = struct
     | String -> "string"
     | Timestamp -> "Time_ns.t"
     | Timespan -> "Time_ns.Span.t"
-    | Any -> "Yojson.Safe.json"
+    | Any -> "Yojson.Safe.t"
     | UserPreferences -> "UserPreferences.t"
 end
 
@@ -72,7 +72,7 @@ let gen_module name json =
       match typ with
       | `String s -> name, (true, BitmexType.of_string s)
       | `List l -> name, (false, Util.(to_string (List.hd_exn l)) |> BitmexType.of_string)
-      | #Yojson.Safe.json -> raise UnsupportedType
+      | #Yojson.Safe.t -> raise UnsupportedType
     end in
   if List.(length keys = 0 && length types = 0) then raise UnsupportedType ;
   Buffer.add_string buf (sprintf "module %s = struct\n  type t = {\n" name ) ;
