@@ -3,7 +3,7 @@
  (public_name bitmex-types)
  (preprocess (pps ppx_sexp_conv))
  (modules bitmex_types)
- (libraries core yojson))
+ (libraries core_kernel.uuid core yojson))
 
 (rule
  (targets bitmex_types.ml)
