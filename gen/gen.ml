@@ -28,28 +28,28 @@ module BitmexType = struct
     | _ -> invalid_arg ("Bitmex.of_string: got " ^ s)
 
   let to_type = function
-    | Guid -> "Uuid.Unstable.t"
+    | Guid -> "Uuidm.t"
     | Boolean -> "bool"
     | Integer -> "int"
     | Long -> "int"
     | Float -> "float"
     | String -> "string"
-    | Timestamp -> "Time_ns.t"
-    | Timespan -> "Time_ns.Span.t"
+    | Timestamp -> "Ptime.t"
+    | Timespan -> "Ptime.Span.t"
     | Any -> "Yojson.Safe.t"
     | UserPreferences -> "UserPreferences.t"
 end
 
 let extract_member = function
-  | BitmexType.Guid -> "to_string |> Uuid.of_string"
+  | BitmexType.Guid -> "to_string |> Uuidm.of_string |> Option.get"
   | Boolean         -> "to_bool"
   | Integer         -> "to_int"
   | Long            -> "to_int"
   | Float           -> "fun v -> try to_float v with Type_error _ -> Float.of_int (to_int v)"
   | String          -> "to_string"
-  | Timestamp       -> "to_string |> Time_ns.of_string"
-  | Timespan        -> "to_string |> Time_ns.Span.of_string"
-  | Any             -> "Fn.id"
+  | Timestamp       -> "to_string |> ptime_of_string"
+  | Timespan        -> "to_string |> ptime_of_string |> Ptime.to_span"
+  | Any             -> "(fun a -> a)"
   | UserPreferences -> "UserPreferences.of_yojson"
 
 exception UnsupportedType
@@ -95,7 +95,7 @@ let gen_module name json =
     if List.mem ~equal:String.equal keys k then
       Buffer.add_string buf (sprintf "    %s = member \"%s\" json |> %s ;\n" k' k (extract_member t))
     else if not atom then
-      Buffer.add_string buf (sprintf "    %s = member \"%s\" json |> to_list |> List.map ~f:%s ;\n"
+      Buffer.add_string buf (sprintf "    %s = member \"%s\" json |> to_list |> List.map %s ;\n"
                                k' k (extract_member t))
     else
       Buffer.add_string buf (sprintf "    %s = (try Some (member \"%s\" json |> %s) with _ -> None) ;\n"
@@ -114,11 +114,54 @@ let gen_module name json =
                                k' k' k' k' k')
     else
       Buffer.add_string buf
-        (sprintf "    %s = Option.first_some t'.%s t.%s ;\n" k' k' k')
+        (sprintf "    %s = (match t'.%s, t.%s with | Some a, _ -> Some a | _, Some b -> Some b | _ -> None) ;\n" k' k' k')
   end ;
   Buffer.add_string buf "  }\n" ;
   Buffer.add_string buf "end" ;
   Buffer.contents buf
+
+let uuidm_module = {|
+module Uuidm = struct
+  include Uuidm
+
+  let t_of_sexp sexp =
+    let sexp_str = string_of_sexp sexp in
+    match of_string sexp_str with
+    | None -> invalid_arg "Uuidm.t_of_sexp"
+    | Some u -> u
+
+  let sexp_of_t t = sexp_of_string (to_string t)
+end|}
+
+let ptime_module = {|
+module Ptime = struct
+  include Ptime
+
+  module Span = struct
+    include Span
+    let t_of_sexp sexp =
+      let sexp_fl = float_of_sexp sexp in
+      Option.get (of_float_s sexp_fl)
+
+    let sexp_of_t t =
+      sexp_of_float (to_float_s t)
+  end
+
+  let t_of_sexp sexp =
+    let sexp_str = string_of_sexp sexp in
+    match of_rfc3339 sexp_str with
+    | Ok (t, _, _) -> t
+    | _ -> invalid_arg "Ptime.t_of_sexp"
+
+  let sexp_of_t t = sexp_of_string (to_rfc3339 t)
+end|}
+
+let ptime_fun = {|
+let ptime_of_string s =
+  match Ptime.of_rfc3339 s with
+  | Ok (t, _, _) -> t
+  | Error _ -> failwith "ptime_of_string"
+|}
 
 let () =
   let open Yojson.Safe in
@@ -128,7 +171,10 @@ let () =
     List.group modules ~break:String.equal in
   Stdio.Out_channel.with_file (Sys.argv.(2))
     ~append:false ~binary:false ~fail_if_exists:false ~f:begin fun oc ->
-    Stdio.Out_channel.fprintf oc "open Core\n\n" ;
+    Stdio.Out_channel.fprintf oc "open Sexplib.Std\n\n" ;
+    Stdio.Out_channel.fprintf oc "%s\n\n" uuidm_module ;
+    Stdio.Out_channel.fprintf oc "%s\n\n" ptime_module ;
+    Stdio.Out_channel.fprintf oc "%s\n\n" ptime_fun ;
     List.iter modules ~f:begin fun group ->
       List.iter (List.rev group) ~f:begin fun name ->
         begin try
