@@ -1,0 +1,20 @@
+opam-version: "2.0"
+authors: "Vincent Bernardoff <vb@luminar.eu.org>"
+maintainer: "Vincent Bernardoff <vb@luminar.eu.org>"
+homepage: "https://github.com/vbmithr/bitmex-types"
+bug-reports: "https://github.com/vbmithr/bitmex-types/issues"
+dev-repo: "git+https://github.com/vbmithr/bitmex-types"
+doc: "https://vbmithr.github.io/bitmex-types/doc"
+build: [ "dune" "build" "-j" jobs "-p" name ]
+run-test: [ "dune" "runtest" "-j" jobs "-p" name ]
+depends: [
+  "dune" {>= "1.11.4"}
+  "core" {build >= "v0.12.4"}
+  "ptime" {>= "0.8.5"}
+  "uuidm" {>= "0.9.7"}
+  "sexplib" {>= "v0.12.0"}
+  "yojson" {>= "1.7.0"}
+]
+synopsis: "Autogeneration of types from BitMEX API"
+description: """
+"""
