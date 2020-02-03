@@ -84,7 +84,7 @@ let gen_module name json =
     in
     Buffer.add_string buf (sprintf "    %s : %s ;\n"
                              (String.uncapitalize k |> protect_key) v) ;
-    if t = Any || t = UserPreferences then true else a || false
+    match t with Any | UserPreferences -> true | _ -> a
   end in
   Buffer.add_string buf (sprintf "  }%s\n\n" (if contains_any then "" else " [@@deriving sexp]"));
   Buffer.add_string buf
@@ -165,11 +165,11 @@ let ptime_of_string s =
 
 let () =
   let open Yojson.Safe in
-  let schema = Stdio.In_channel.read_all Sys.argv.(1) |> from_string in
+  let schema = Stdio.In_channel.read_all (Sys.get_argv ()).(1) |> from_string in
   let modules = Util.keys schema in
   let modules =
     List.group modules ~break:String.equal in
-  Stdio.Out_channel.with_file (Sys.argv.(2))
+  Stdio.Out_channel.with_file (Sys.get_argv ()).(2)
     ~append:false ~binary:false ~fail_if_exists:false ~f:begin fun oc ->
     Stdio.Out_channel.fprintf oc "open Sexplib.Std\n\n" ;
     Stdio.Out_channel.fprintf oc "%s\n\n" uuidm_module ;
