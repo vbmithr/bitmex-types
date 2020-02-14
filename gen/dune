@@ -1,4 +1,5 @@
 (executable
  (name gen)
  (public_name bitmex-types-gen)
+ (package bitmex-types)
  (libraries core yojson))
