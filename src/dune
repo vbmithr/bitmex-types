@@ -1,11 +1,14 @@
 (library
- (name        bitmex_types)
+ (name bitmex_types)
  (public_name bitmex-types)
- (preprocess (pps ppx_sexp_conv))
+ (flags -w -27)
+ (preprocess
+  (pps ppx_sexp_conv ppx_fields_conv))
  (modules bitmex_types)
  (libraries ptime uuidm sexplib yojson))
 
 (rule
  (targets bitmex_types.ml)
  (deps schema)
- (action (run bitmex-types-gen schema bitmex_types.ml)))
+ (action
+  (run bitmex-types-gen schema bitmex_types.ml)))
